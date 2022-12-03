@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "930965411985",
+    "project_id": "golek-notification",
+    "storage_bucket": "golek-notification.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:930965411985:android:41544a2b0c813a1fd0c730",
+        "android_client_info": {
+          "package_name": "com.example.golek_mobile"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "930965411985-bqr6nl1066ene9gd97cjer0ivhd9ifrf.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCz4KDXC0LvcMyMqm1kdolXtEOUt7jaHyQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "930965411985-bqr6nl1066ene9gd97cjer0ivhd9ifrf.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
