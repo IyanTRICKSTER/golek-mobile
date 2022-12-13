@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:golek_mobile/injector/injector.dart';
 import 'package:golek_mobile/logic/auth/auth_bloc.dart';
+import 'package:golek_mobile/logic/bookmark/bookmark_bloc.dart';
 import 'package:golek_mobile/logic/navigation/navigation_cubit.dart';
-import 'package:golek_mobile/logic/post/post_bloc.dart';
 import 'package:golek_mobile/storage/sharedpreferences_manager.dart';
 import 'package:golek_mobile/ui/camera/camera.dart';
 import 'package:golek_mobile/ui/confirmation.dart';
@@ -15,8 +15,6 @@ import 'package:golek_mobile/ui/login.dart';
 import 'package:golek_mobile/ui/notification.dart';
 import 'package:golek_mobile/ui/profile.dart';
 import 'package:golek_mobile/ui/search.dart';
-
-import 'logic/navigation/navbar.dart';
 
 class App extends StatelessWidget {
   final SharedPreferencesManager _sharedPreferencesManager = locator<SharedPreferencesManager>();
@@ -37,16 +35,19 @@ class App extends StatelessWidget {
         BlocProvider(
           create: (context) => AuthBloc(),
         ),
+        BlocProvider(
+          create: (context) => BookmarkBloc()..add(BookmarkRefreshEvent()),
+        ),
         // BlocProvider(create: (context) => PostBloc()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         title: 'Golek',
-        // home: isAlreadyLoggedIn! ? const MainScreen() : const LoginScreen(),
-        home: const CreatePostScreen(),
+        home: isAlreadyLoggedIn! ? const MainScreen() : LoginScreen(),
+        // home: const CreatePostScreen(),
         navigatorKey: locator<NavigationService>().navigatorKey,
         routes: {
-          '/login_screen': (context) => const LoginScreen(),
+          '/login_screen': (context) => LoginScreen(),
           '/main_screen': (context) => const MainScreen(),
         },
       ),
@@ -64,14 +65,24 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  int tabIndex = 0;
-
   final HomeScreen _homeScreen = const HomeScreen();
   final SearchScreen _searchScreen = const SearchScreen();
   final ProfileScreen _profileScreen = const ProfileScreen();
+  final PageController pageController = PageController();
+  int tabIndex = 0;
 
-  final pageController = PageController();
   void onPageChanged(int index) {
+    if (index == 1) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const CameraScreen(),
+          ),
+        );
+      });
+      return;
+    }
     setState(() {
       tabIndex = index;
     });
@@ -80,28 +91,55 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     Widget buildAppTitle() {
-      return Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Container(
-            width: 76,
-            height: 30,
-            decoration: const BoxDecoration(),
-            child: Image.asset("assets/images/logo.png"),
-          ),
-          IconButton(
-            onPressed: () => {
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => const NotificationPage()));
-              }),
-            },
-            icon: const Icon(
-              Icons.notifications_outlined,
-              color: Colors.black,
-              size: 32,
-            ),
-          ),
-        ],
+      return BlocProvider(
+        create: (context) => AuthBloc(),
+        child: BlocBuilder<AuthBloc, AuthState>(
+          builder: (context, state) {
+            return Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  width: 76,
+                  height: 30,
+                  decoration: const BoxDecoration(),
+                  child: Image.asset("assets/images/logo.png"),
+                ),
+                Row(
+                  children: [
+                    IconButton(
+                      onPressed: () => {
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => const NotificationPage()));
+                        }),
+                      },
+                      icon: const Icon(
+                        Icons.notifications_outlined,
+                        color: Color.fromARGB(221, 29, 28, 28),
+                        size: 32,
+                      ),
+                    ),
+                    PopupMenuButton(
+                      itemBuilder: ((context) {
+                        return const [
+                          PopupMenuItem<int>(
+                            value: 0,
+                            child: Text("Logout"),
+                          ),
+                        ];
+                      }),
+                      onSelected: ((value) {
+                        if (value == 0) {
+                          BlocProvider.of<AuthBloc>(context).add(LogoutEvent());
+                          Navigator.pushNamedAndRemoveUntil(context, "/login_screen", (route) => false);
+                        }
+                      }),
+                    )
+                  ],
+                ),
+              ],
+            );
+          },
+        ),
       );
     }
 
@@ -153,6 +191,7 @@ class _MainScreenState extends State<MainScreen> {
     return Scaffold(
       appBar: AppBar(
         title: buildAppTitle(),
+        foregroundColor: Colors.pink[800],
         backgroundColor: Colors.white,
         elevation: 0.5,
       ),
@@ -186,7 +225,7 @@ class _MainScreenState extends State<MainScreen> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const CameraPage(),
+                        builder: (context) => const CameraScreen(),
                       ),
                     );
                   });
@@ -237,7 +276,6 @@ class _MainScreenState extends State<MainScreen> {
         children: [
           _homeScreen,
           Container(),
-          // CameraPage(),
           _searchScreen,
           _profileScreen,
         ],
@@ -248,7 +286,7 @@ class _MainScreenState extends State<MainScreen> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => const ItemReturnConfirmationPage(),
+                builder: (context) => const ConfirmationPostScreen(),
               ),
             );
           });

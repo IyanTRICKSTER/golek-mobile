@@ -11,15 +11,15 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:video_player/video_player.dart';
 import 'package:golek_mobile/ui/camera/camera.dart';
 
-class CameraScreen extends StatefulWidget {
-  const CameraScreen({super.key});
+class CameraUI extends StatefulWidget {
+  const CameraUI({super.key});
 
   @override
   // ignore: library_private_types_in_public_api
-  _CameraScreenState createState() => _CameraScreenState();
+  _CameraUIState createState() => _CameraUIState();
 }
 
-class _CameraScreenState extends State<CameraScreen> with WidgetsBindingObserver {
+class _CameraUIState extends State<CameraUI> with WidgetsBindingObserver {
   CameraController? controller;
   VideoPlayerController? videoController;
 
@@ -84,14 +84,14 @@ class _CameraScreenState extends State<CameraScreen> with WidgetsBindingObserver
 
     List<Map<int, dynamic>> fileNames = [];
 
-    fileList.forEach((file) {
+    for (var file in fileList) {
       if (file.path.contains('.jpg') || file.path.contains('.mp4')) {
         allFileList.add(File(file.path));
 
         String name = file.path.split('/').last.split('.').first;
         fileNames.add({0: int.parse(name), 1: file.path.split('/').last});
       }
-    });
+    }
 
     if (fileNames.isNotEmpty) {
       final recentFile = fileNames.reduce((curr, next) => curr[0] > next[0] ? curr : next);
@@ -268,7 +268,7 @@ class _CameraScreenState extends State<CameraScreen> with WidgetsBindingObserver
   @override
   void initState() {
     // Hide the status bar in Android
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: []);
+    // SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: []);
     getPermissionStatus();
     super.initState();
   }
@@ -540,7 +540,14 @@ class _CameraScreenState extends State<CameraScreen> with WidgetsBindingObserver
                                                 );
 
                                                 WidgetsBinding.instance.addPostFrameCallback((_) {
-                                                  Navigator.push(context, MaterialPageRoute(builder: (context) => CreatePostScreen()));
+                                                  Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                      builder: (context) => CreatePostScreen(
+                                                        imageFile: imageFile,
+                                                      ),
+                                                    ),
+                                                  );
                                                 });
 
                                                 refreshAlreadyCapturedImages();

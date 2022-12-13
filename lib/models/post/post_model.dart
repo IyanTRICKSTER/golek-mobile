@@ -7,6 +7,10 @@ part 'post_model.g.dart';
 
 @JsonSerializable()
 class PostModel {
+  @JsonKey(name: "id")
+  late String id;
+  @JsonKey(name: "user_id")
+  late int userID;
   @JsonKey(name: "title")
   late String title;
   @JsonKey(name: "place")
@@ -20,7 +24,7 @@ class PostModel {
   @JsonKey(ignore: true)
   String? error;
 
-  PostModel(this.title, this.imageUrl, this.characteristics, this.place);
+  PostModel(this.id, this.title, this.imageUrl, this.characteristics, this.place);
 
   factory PostModel.fromJson(Map<String, dynamic> json) => _$PostModelFromJson(json);
 

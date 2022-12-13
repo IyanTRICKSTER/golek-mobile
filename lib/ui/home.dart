@@ -2,8 +2,11 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:golek_mobile/injector/injector.dart';
 import 'package:golek_mobile/logic/post/post_bloc.dart';
+import 'package:golek_mobile/models/bookmark/bookmark_model.dart';
 import 'package:golek_mobile/models/post/post_model.dart';
+import 'package:golek_mobile/storage/sharedpreferences_manager.dart';
 import 'package:golek_mobile/widget/post.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -14,6 +17,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMixin<HomeScreen> {
+  final SharedPreferencesManager _sharedPreferencesManager = locator<SharedPreferencesManager>();
   final ScrollController _scrollController = ScrollController();
   final PostBloc _postBloc = PostBloc();
 
@@ -32,27 +36,6 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
   Widget build(BuildContext context) {
     super.build(context);
 
-    // return SingleChildScrollView(
-    //   child: Column(children: [
-    //     Post(
-    //       username: "Iyan",
-    //       userMajor: "Teknik Informatika",
-    //     ),
-    //     Post(
-    //       username: "Putra",
-    //       userMajor: "Sistem Informasi",
-    //     ),
-    //     Post(
-    //       username: "Iyan",
-    //       userMajor: "Teknik Informatika",
-    //     ),
-    //     Post(
-    //       username: "Putra",
-    //       userMajor: "Sistem Informasi",
-    //     ),
-    //   ]),
-    // );
-
     return BlocProvider(
       create: (context) => _postBloc..add(LoadPostEvent()),
       child: BlocListener<PostBloc, PostState>(
@@ -60,7 +43,7 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
           // if (state is PostLoadedState) {
           //   log("wkwk!!");
           // }
-          log(state.toString());
+          // log(state.toString());
         },
         child: BlocBuilder<PostBloc, PostState>(
           builder: (context, state) {
@@ -103,10 +86,16 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
               return SafeArea(
                 child: ListView.builder(
                   controller: _scrollController,
-                  itemCount: (postLoadedState.hasReachedMax) ? postLoadedState.posts.data!.length : postLoadedState.posts.data!.length + 1,
+                  itemCount: (postLoadedState.hasReachedMax) ? postLoadedState.posts!.data!.length : postLoadedState.posts!.data!.length + 1,
                   itemBuilder: (context, index) {
-                    if (index < postLoadedState.posts.data!.length) {
-                      return Post(postModel: postLoadedState.posts.data![index]);
+                    if (index < postLoadedState.posts!.data!.length) {
+                      PostModel post = postLoadedState.posts!.data![index];
+                      BookmarkModel bookmark = postLoadedState.bookmark;
+                      return Post(
+                        postModel: post,
+                        bookmarkModel: bookmark,
+                        loggedInUserID: _sharedPreferencesManager.getInt(SharedPreferencesManager.keyUserID)!,
+                      );
                     }
                     return Container(
                       margin: const EdgeInsets.only(top: 8, bottom: 8),
@@ -128,6 +117,27 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
         ),
       ),
     );
+
+    // return SingleChildScrollView(
+    //   child: Column(children: [
+    //     Post(
+    //       username: "Iyan",
+    //       userMajor: "Teknik Informatika",
+    //     ),
+    //     Post(
+    //       username: "Putra",
+    //       userMajor: "Sistem Informasi",
+    //     ),
+    //     Post(
+    //       username: "Iyan",
+    //       userMajor: "Teknik Informatika",
+    //     ),
+    //     Post(
+    //       username: "Putra",
+    //       userMajor: "Sistem Informasi",
+    //     ),
+    //   ]),
+    // );
   }
 
   @override

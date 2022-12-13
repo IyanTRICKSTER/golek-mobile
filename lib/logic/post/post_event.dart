@@ -14,3 +14,15 @@ class UploadPostEvent extends PostEvent {
 
   UploadPostEvent(this.postModel);
 }
+
+class PostRequestValidationTokenEvent extends PostEvent {
+  final String postID;
+
+  const PostRequestValidationTokenEvent({required this.postID});
+}
+
+class PostValidateTokenEvent extends PostEvent {
+  final String jsonStringPayload;
+
+  const PostValidateTokenEvent({required this.jsonStringPayload});
+}

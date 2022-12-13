@@ -13,7 +13,7 @@ class UserModel {
   @JsonKey(name: "nim")
   late String nim;
   @JsonKey(ignore: true)
-  late String error;
+  String? error = "";
 
   UserModel(this.id, this.username, this.email, this.nim);
 

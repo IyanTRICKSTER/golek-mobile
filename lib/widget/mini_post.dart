@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:golek_mobile/models/post/post_model.dart';
 
 class MiniPost extends StatefulWidget {
-  const MiniPost({super.key});
+  PostModel postModel;
+
+  MiniPost({super.key, required this.postModel});
 
   @override
   State<StatefulWidget> createState() => _MiniPostState();
@@ -14,7 +17,9 @@ class _MiniPostState extends State<MiniPost> {
       padding: const EdgeInsets.all(5),
       height: 120,
       width: 120,
-      child: Image.asset("assets/images/post1.jpeg"),
+      child: Image.network(
+        widget.postModel.imageUrl,
+      ),
     );
   }
 }

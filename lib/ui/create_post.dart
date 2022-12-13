@@ -2,35 +2,33 @@ import 'dart:developer';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:golek_mobile/injector/injector.dart';
 import 'package:golek_mobile/logic/post/post_bloc.dart';
 import 'package:golek_mobile/models/post/post_model.dart';
+import 'package:golek_mobile/ui/home.dart';
 import 'package:path_provider/path_provider.dart';
 
 class CreatePostScreen extends StatefulWidget {
-  // final File? imageFile;
+  // String? imageFile;
+  File? imageFile;
 
-  const CreatePostScreen({super.key});
+  CreatePostScreen({super.key, this.imageFile});
 
   @override
   State<CreatePostScreen> createState() => _CreatePostScreenState();
 }
 
 class _CreatePostScreenState extends State<CreatePostScreen> {
-  List<Widget> characsInput = <Widget>[
-    TextFormField(
-      decoration: const InputDecoration(
-        border: UnderlineInputBorder(),
-        labelText: '1',
-      ),
-    ),
-    TextFormField(
-      decoration: const InputDecoration(
-        border: UnderlineInputBorder(),
-        labelText: '2',
-      ),
-    )
-  ];
+  final TextEditingController titleController = TextEditingController();
+  final TextEditingController placeController = TextEditingController();
+
+  final TextEditingController input1 = TextEditingController();
+  final TextEditingController input3 = TextEditingController();
+  final TextEditingController input2 = TextEditingController();
+
+  // List<Widget> characsInput = <Widget>[];
 
   Future<Directory> getFileDirectory() async {
     final dir = await getExternalStorageDirectory();
@@ -40,11 +38,19 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     return directory;
   }
 
-  Future<File> getImageFile() async {
-    final Directory directory = await getFileDirectory();
-    File imageFile = File("${directory.path}/testpost.jpg");
-    return imageFile;
+  Future<String> getImageFile() async {
+    // final Directory directory = await getFileDirectory();
+    // File imageFile = File("${directory.path}/100.jpg");
+    // return imageFile;
+    return "custom path";
   }
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  void submitForm() {}
 
   @override
   Widget build(BuildContext context) {
@@ -54,6 +60,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
         listener: (context, state) {
           if (state is PostUploadedState) {
             ScaffoldMessenger.of(context).hideCurrentSnackBar();
+            Navigator.pushNamedAndRemoveUntil(context, "/main_screen", (route) => false);
           }
         },
         child: BlocBuilder<PostBloc, PostState>(
@@ -63,16 +70,33 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
               builder: (context, snapshot) {
                 return Scaffold(
                   appBar: AppBar(
+                    automaticallyImplyLeading: false,
                     backgroundColor: Colors.white,
+                    // actions: [],
                     elevation: 0.5,
                     title: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        TextButton(onPressed: () {}, child: const Icon(Icons.arrow_back)),
+                        TextButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                            },
+                            child: const Icon(Icons.arrow_back)),
                         TextButton(
                           onPressed: () {
-                            PostModel postData = PostModel("Kunci Motor 2", snapshot.data!.path.toString(),
-                                <PostCharacteristic>[PostCharacteristic("kunci dua"), PostCharacteristic("jelek")], "Depan pintu");
+                            // log(snapshot.data!.path.toString());
+
+                            PostModel postData = PostModel(
+                              "",
+                              titleController.text,
+                              widget.imageFile!.path,
+                              <PostCharacteristic>[
+                                PostCharacteristic(input1.text),
+                                PostCharacteristic(input2.text),
+                                PostCharacteristic(input3.text),
+                              ],
+                              placeController.text,
+                            );
 
                             BlocProvider.of<PostBloc>(context).add(UploadPostEvent(postData));
 
@@ -123,7 +147,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                                     height: MediaQuery.of(context).size.height / 2.3,
                                     decoration: BoxDecoration(
                                       image: DecorationImage(
-                                        image: Image.file(snapshot.data!).image,
+                                        image: Image.file(widget.imageFile!).image,
                                       ),
                                     ),
                                   );
@@ -134,12 +158,14 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                               }),
                             ),
                             TextFormField(
+                              controller: titleController,
                               decoration: const InputDecoration(
                                 border: UnderlineInputBorder(),
                                 labelText: 'Judul Post',
                               ),
                             ),
                             TextFormField(
+                              controller: placeController,
                               decoration: const InputDecoration(
                                 border: UnderlineInputBorder(),
                                 labelText: 'Tempat ditemukan',
@@ -150,23 +176,45 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                               child: Text("Ciri - ciri"),
                             ),
                             Column(
-                              children: characsInput,
-                            ),
-                            TextButton(
-                              onPressed: () {
-                                characsInput.add(TextFormField(
-                                  decoration: InputDecoration(
-                                    border: const UnderlineInputBorder(),
-                                    label: Text("${characsInput.length + 1}"),
+                              children: [
+                                TextFormField(
+                                  controller: input1,
+                                  decoration: const InputDecoration(
+                                    border: UnderlineInputBorder(),
+                                    labelText: '1',
                                   ),
-                                ));
-                                setState(() {});
-                              },
-                              child: const Icon(
-                                Icons.add_rounded,
-                                color: Colors.black,
-                              ),
-                            )
+                                ),
+                                TextFormField(
+                                  controller: input2,
+                                  decoration: const InputDecoration(
+                                    border: UnderlineInputBorder(),
+                                    labelText: '2',
+                                  ),
+                                ),
+                                TextFormField(
+                                  controller: input3,
+                                  decoration: const InputDecoration(
+                                    border: UnderlineInputBorder(),
+                                    labelText: '3',
+                                  ),
+                                )
+                              ],
+                            ),
+                            // TextButton(
+                            //   onPressed: () {
+                            //     characsInput.add(TextFormField(
+                            //       decoration: InputDecoration(
+                            //         border: const UnderlineInputBorder(),
+                            //         label: Text("${characsInput.length + 1}"),
+                            //       ),
+                            //     ));
+                            //     setState(() {});
+                            //   },
+                            //   child: const Icon(
+                            //     Icons.add_rounded,
+                            //     color: Colors.black,
+                            //   ),
+                            // )
                           ],
                         ),
                       ),

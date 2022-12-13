@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:golek_mobile/ui/camera/camera_screen.dart';
+import 'package:golek_mobile/ui/camera/camera_ui.dart';
 import 'package:camera/camera.dart';
 
 List<CameraDescription> cameras = [];
 
-class CameraPage extends StatefulWidget {
-  const CameraPage({super.key});
+class CameraScreen extends StatefulWidget {
+  const CameraScreen({super.key});
 
   @override
   State<StatefulWidget> createState() {
-    return _CameraPageState();
+    return _CameraScreenState();
   }
 }
 
-class _CameraPageState extends State<CameraPage> {
+class _CameraScreenState extends State<CameraScreen> {
   Future<void> ensureCamera() async {
     try {
       cameras = await availableCameras();
@@ -24,16 +24,25 @@ class _CameraPageState extends State<CameraPage> {
   }
 
   Future<bool> showStatusBar() async {
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge, overlays: []);
+    // Navigator.pushNamedAndRemoveUntil(context, '/main_screen', (route) => false);
+    Navigator.pop(context);
     return true;
   }
 
   @override
-  Widget build(BuildContext context) {
+  void initState() {
+    super.initState();
+    // SystemChrome.setEnabledSystemUIMode(SystemUiMode.leanBack, overlays: []);
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(statusBarColor: Colors.transparent));
     ensureCamera();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: showStatusBar,
-      child: const CameraScreen(),
+      child: const CameraUI(),
     );
   }
 }

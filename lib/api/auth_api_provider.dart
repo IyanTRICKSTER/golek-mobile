@@ -31,7 +31,7 @@ class APIAuthProvider {
       return TokenModel.fromJson(response.data);
     } on DioError catch (error, stacktrace) {
       _printError(error, stacktrace);
-      return TokenModel.withError(error.toString(), error.response!.statusCode);
+      return TokenModel.withError(error.response!.data["error"], error.response!.statusCode);
     }
   }
 

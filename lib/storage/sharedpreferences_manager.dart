@@ -8,6 +8,8 @@ class SharedPreferencesManager {
   static const String keyRefreshToken = 'RefreshToken';
   static const String keyIsLoggedIn = 'IsLoggedIn';
   static const String keyEmail = 'Email';
+  static const String keyUsername = 'Username';
+  static const String keyUserID = 'UserID';
 
   static Future<SharedPreferencesManager> getInstance() async {
     _instance ??= SharedPreferencesManager();

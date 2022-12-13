@@ -1,19 +1,48 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:expandable_text/expandable_text.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:golek_mobile/logic/bookmark/bookmark_bloc.dart';
+import 'package:golek_mobile/models/bookmark/bookmark_model.dart';
 import 'package:golek_mobile/models/post/post_model.dart';
 import 'package:golek_mobile/ui/request_confirmation.dart';
 
 class Post extends StatefulWidget {
   final PostModel postModel;
+  final BookmarkModel bookmarkModel;
+  final int loggedInUserID;
+  late bool isOwner;
 
-  const Post({super.key, required this.postModel});
+  Post({super.key, required this.postModel, required this.loggedInUserID, required this.bookmarkModel}) {
+    postModel.userID == loggedInUserID ? isOwner = true : isOwner = false;
+  }
 
   @override
   State<Post> createState() => _PostState();
 }
 
 class _PostState extends State<Post> {
+  final BookmarkBloc _bookmarkBloc = BookmarkBloc();
+  late bool isBookmarked = false;
+  late int? postIndex;
   String characs = "";
+
+  bool isPostBookmarked(PostModel postModel, BookmarkModel bookmarkModel) {
+    for (var i = 0; i < bookmarkModel.posts.length; i++) {
+      if (bookmarkModel.posts[i].id == postModel.id) {
+        postIndex = i;
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    isBookmarked = isPostBookmarked(widget.postModel, widget.bookmarkModel);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,33 +60,63 @@ class _PostState extends State<Post> {
           padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Container(
-                width: 34,
-                height: 34,
-                decoration: const BoxDecoration(
-                    shape: BoxShape.circle,
-                    image: DecorationImage(
-                      image: AssetImage("assets/images/user.jpg"),
-                    )),
-              ),
-              const SizedBox(
-                width: 6,
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              Row(
                 children: [
-                  Text(
-                    widget.postModel.user.username,
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  Container(
+                    width: 34,
+                    height: 34,
+                    decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        image: DecorationImage(
+                          image: AssetImage("assets/images/user.jpg"),
+                        )),
                   ),
-                  Text(
-                    widget.postModel.user.usermajor,
-                    style: const TextStyle(fontSize: 12),
-                  )
+                  const SizedBox(
+                    width: 6,
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        widget.postModel.user.username,
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      ),
+                      Text(
+                        widget.postModel.user.usermajor,
+                        style: const TextStyle(fontSize: 12),
+                      )
+                    ],
+                  ),
                 ],
-              )
+              ),
+              widget.isOwner
+                  ? PopupMenuButton(
+                      padding: const EdgeInsets.all(0.0),
+                      itemBuilder: ((context) {
+                        return const [
+                          PopupMenuItem<int>(
+                            value: 0,
+                            child: Center(child: Text("update")),
+                          ),
+                          PopupMenuItem<int>(
+                            value: 1,
+                            child: Center(
+                              child: Text(
+                                "remove",
+                                style: TextStyle(
+                                  color: Colors.red,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ];
+                      }),
+                      onSelected: ((value) {}),
+                    )
+                  : Container(),
             ],
           ),
         ),
@@ -75,38 +134,96 @@ class _PostState extends State<Post> {
           padding: const EdgeInsets.only(bottom: 0),
           child: Row(
             children: [
-              IconButton(
-                onPressed: () => {print("Bookmark button clicked!")},
-                icon: const Icon(
-                  Icons.bookmark_add_outlined,
-                  size: 29,
+              BlocProvider(
+                create: (context) => _bookmarkBloc,
+                child: BlocListener<BookmarkBloc, BookmarkState>(
+                  listener: (context, state) {
+                    if (state is BookmarkAddedState) {
+                      isBookmarked = true;
+                    }
+                    if (state is BookmarkRevokedState) {
+                      isBookmarked = false;
+                    }
+                    // log("Bookmark ${state.toString()}");
+                  },
+                  child: IconButton(onPressed: () {
+                    setState(() {
+                      if (isBookmarked) {
+                        _bookmarkBloc.add(BookmarkRevokePostEvent(postID: widget.postModel.id));
+                        if (postIndex != null) {
+                          widget.bookmarkModel.posts.removeAt(postIndex!);
+                        }
+                      } else {
+                        _bookmarkBloc.add(BookmarkAddPostEvent(postID: widget.postModel.id));
+                        widget.bookmarkModel.posts.add(MarkedPostModel(widget.postModel.id, "", ""));
+                      }
+                      isBookmarked = !isBookmarked;
+                    });
+
+                    // print("Bookmark button clicked!");
+                  }, icon: BlocBuilder<BookmarkBloc, BookmarkState>(
+                    builder: (context, state) {
+                      if (state is BookmarkLoadingState) {
+                        return const Center(
+                          child: SizedBox(
+                            height: 18,
+                            width: 18,
+                            child: CircularProgressIndicator(
+                              color: Color.fromARGB(255, 37, 35, 35),
+                            ),
+                          ),
+                        );
+                      }
+                      return Icon(
+                        isBookmarked ? Icons.bookmark_added : Icons.bookmark_add_outlined,
+                        size: 29,
+                      );
+                    },
+                  )),
                 ),
               ),
-              IconButton(
-                onPressed: () => {print("Chat button clicked!")},
-                icon: const Icon(
-                  Icons.chat_bubble_outline_sharp,
-                  size: 27,
-                ),
-              ),
-              IconButton(
-                onPressed: () => {
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    Navigator.push(context, MaterialPageRoute(builder: (context) => const RequestConfirmation()));
-                  }),
-                },
-                icon: const Icon(
-                  Icons.handshake_outlined,
-                  size: 27,
-                ),
-              ),
+              widget.isOwner
+                  ? Container(
+                      height: 0,
+                      width: 0,
+                      margin: EdgeInsets.all(0),
+                    )
+                  : IconButton(
+                      onPressed: () => {print("Chat button clicked!")},
+                      icon: const Icon(
+                        Icons.chat_bubble_outline_sharp,
+                        size: 27,
+                      ),
+                    ),
+              widget.isOwner
+                  ? IconButton(
+                      onPressed: () => {
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => RequestConfirmationScreen(
+                                        postID: widget.postModel.id,
+                                      )));
+                        }),
+                      },
+                      icon: const Icon(
+                        Icons.handshake_outlined,
+                        size: 27,
+                      ),
+                    )
+                  : Container(
+                      height: 0,
+                      width: 0,
+                      margin: EdgeInsets.all(0),
+                    ),
             ],
           ),
         ),
         Container(
           padding: const EdgeInsets.only(top: 0, bottom: 6, left: 14, right: 14),
           child: ExpandableText(
-            "telah menemukan ${widget.postModel.title} di ${widget.postModel.place} dengan ciri ciri berikut: $characs\n ${characs = ''}",
+            "telah menemukan ${widget.postModel.title} di ${widget.postModel.place} dengan ciri ciri berikut: $characs \n ${characs = ''}",
             expandText: 'selengkapnya',
             collapseText: '\nlebih sedikit',
             maxLines: 2,

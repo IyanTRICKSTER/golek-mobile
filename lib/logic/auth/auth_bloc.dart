@@ -1,11 +1,14 @@
 import 'dart:async';
+import 'dart:developer';
 
+// ignore: depend_on_referenced_packages
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:golek_mobile/api/api_repository.dart';
 import 'package:golek_mobile/injector/injector.dart';
 import 'package:golek_mobile/models/login/login_body.dart';
 import 'package:golek_mobile/models/token/token.dart';
+import 'package:golek_mobile/models/user/user_model.dart';
 import 'package:golek_mobile/storage/sharedpreferences_manager.dart';
 
 part 'auth_event.dart';
@@ -51,6 +54,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     await sharedPreferencesManager.putString(SharedPreferencesManager.keyRefreshToken, token.refreshToken!);
     await sharedPreferencesManager.putBool(SharedPreferencesManager.keyIsLoggedIn, true);
     await sharedPreferencesManager.putString(SharedPreferencesManager.keyEmail, event.loginBody.email);
+
+    //Retrive User Information
+    UserModel user = await authRepository.whoami(token.accessToken);
+    await sharedPreferencesManager.putInt(SharedPreferencesManager.keyUserID, user.id);
+    await sharedPreferencesManager.putString(SharedPreferencesManager.keyUsername, user.username);
 
     emit(LoginSuccessState());
   }
