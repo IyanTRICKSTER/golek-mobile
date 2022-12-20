@@ -12,7 +12,7 @@ import 'package:golek_mobile/utils/dio_interceptor.dart';
 
 class APIRepository {
   final Dio _dio = Dio();
-  final String _baseUrl = 'https://7907-103-233-89-235.ngrok.io/';
+  final String _baseUrl = 'https://c418-101-255-164-62.ngrok.io/';
   // final String _baseUrl = 'http://gateway.golek.api/';
   late final APIAuthProvider _apiAuthProvider;
   late final APIPostProvider _apiPostProvider;
@@ -38,6 +38,7 @@ class APIRepository {
   Future<PostModel> uploadPost(PostModel data) async => await _apiPostProvider.uploadPost(data);
   Future<PostValidationResponseModel> requestPostValidationToken(String postID) async => await _apiPostProvider.requestPostValidation(postID);
   Future<Response> postValidate(PostValidationRequestModel requestModel) async => await _apiPostProvider.postValidate(requestModel);
+  Future<ListPostModel> searchPost(String postID, int page, int limit) async => await _apiPostProvider.searchPost(postID, page, limit);
 
   //Bookmark
   Future<BookmarkModel> fetchBookmarkByUserID(int userID) async => await _apiBookmarkProvider.fetchBookmarkByUserID(userID);

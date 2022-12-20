@@ -47,7 +47,7 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
         },
         child: BlocBuilder<PostBloc, PostState>(
           builder: (context, state) {
-            if (state is PostUninitialized) {
+            if (state is PostUninitializedState) {
               return const Center(
                 child: SizedBox(
                   height: 30,
@@ -90,11 +90,21 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
                   itemBuilder: (context, index) {
                     if (index < postLoadedState.posts!.data!.length) {
                       PostModel post = postLoadedState.posts!.data![index];
-                      BookmarkModel bookmark = postLoadedState.bookmark;
+                      BookmarkModel bookmark = postLoadedState.bookmark!;
                       return Post(
+                        listViewIndex: index,
                         postModel: post,
                         bookmarkModel: bookmark,
                         loggedInUserID: _sharedPreferencesManager.getInt(SharedPreferencesManager.keyUserID)!,
+                        loggedInUsername: _sharedPreferencesManager.getString(SharedPreferencesManager.keyUsername)!,
+                        onUpdateClicked: () {
+                          log("update post");
+                        },
+                        onDeleteClicked: () {
+                          setState(() {
+                            postLoadedState.posts!.data!.removeAt(index);
+                          });
+                        },
                       );
                     }
                     return Container(

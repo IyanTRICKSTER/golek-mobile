@@ -79,6 +79,9 @@ late FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
 Future<void> main() async {
   try {
     WidgetsFlutterBinding.ensureInitialized();
+    await Firebase.initializeApp();
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+    await setupFlutterNotifications();
     await setupInjector();
     //if run other than web
     // if (!kIsWeb) {

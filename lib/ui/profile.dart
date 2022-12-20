@@ -144,7 +144,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         _profileReturnedPostsBloc.add(LoadProfileReturnedPostEvent());
       }
       if (_tabController.index == 2) {
-        _bookmarkBloc.add(BookmarkRefreshEvent());
+        // _bookmarkBloc.add(BookmarkRefreshEvent());
       }
     });
 
@@ -248,7 +248,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
               create: (context) => _profileReturnedPostsBloc,
             ),
             BlocProvider(
-              create: (context) => _bookmarkBloc,
+              create: (context) => _bookmarkBloc..add(BookmarkRefreshEvent()),
             ),
           ],
           child: MultiBlocListener(
@@ -289,7 +289,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                     bookmarkPostRange = state.bookmark!.posts.length;
                   }
                   if (state is BookmarkAddedState || state is BookmarkRevokedState) {
-                    context.read<BookmarkBloc>().add(BookmarkRefreshEvent());
+                    // context.read<BookmarkBloc>().add(BookmarkRefreshEvent());
                   }
                 },
               )
@@ -302,7 +302,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                     return GridView.builder(
                       gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
                         maxCrossAxisExtent: 150,
-                        childAspectRatio: 3 / 5,
+                        childAspectRatio: 3 / 4,
                         crossAxisSpacing: 1,
                         mainAxisSpacing: 1,
                       ),

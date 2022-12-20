@@ -34,72 +34,76 @@ class DioLoggingInterceptors extends Interceptor {
     debugHttpError(err);
 
     //Get http error code, if we get 401 then request new access_token
-    int? responseCode = err.response!.statusCode;
-    //Get old access token
-    String? oldAccessToken = _sharedPreferencesManager.getString(SharedPreferencesManager.keyAccessToken);
 
-    //if we still has token and gets unathorized, then reauthorize
-    if (oldAccessToken != null) {
-      if (oldAccessToken!.isNotEmpty && responseCode! == 401) {
-        //Lock Interceptor
-        _dio.interceptors.requestLock.lock();
-        _dio.interceptors.responseLock.lock();
+    if (err.response != null) {
+      int? responseCode = err.response!.statusCode;
+      //Get old access token
+      String? oldAccessToken = _sharedPreferencesManager.getString(SharedPreferencesManager.keyAccessToken);
 
-        //Load refreshToken from storage
-        String? refreshToken = _sharedPreferencesManager.getString(SharedPreferencesManager.keyRefreshToken);
+      //if we still has token and gets unathorized, then reauthorize
+      if (oldAccessToken != null) {
+        if (oldAccessToken!.isNotEmpty && responseCode! == 401) {
+          //Lock Interceptor
+          _dio.interceptors.requestLock.lock();
+          _dio.interceptors.responseLock.lock();
 
-        //Request new access token
-        APIRepository authRepository = APIRepository();
-        TokenModel newToken = await authRepository.refreshToken(refreshToken!);
+          //Load refreshToken from storage
+          String? refreshToken = _sharedPreferencesManager.getString(SharedPreferencesManager.keyRefreshToken);
 
-        //if request new token success, save new token to localstorage
-        if (newToken.error.isNotEmpty && newToken.errorCode! == 401) {
-          log("Refresh token has expired!");
-          _sharedPreferencesManager.clearAll();
-          locator<NavigationService>().navigateTo('/login_screen');
-          return null;
-        }
+          //Request new access token
+          APIRepository authRepository = APIRepository();
+          TokenModel newToken = await authRepository.refreshToken(refreshToken!);
 
-        if (newToken.error.isEmpty) {
-          //Replace old access token
-          log("Saving new Access token");
-          await _sharedPreferencesManager.putString(SharedPreferencesManager.keyAccessToken, newToken.accessToken);
-          // await _sharedPreferencesManager.putString(SharedPreferencesManager.keyRefreshToken, newToken.refreshToken);
-        }
-
-        //Unlock Interceptor
-        _dio.interceptors.requestLock.unlock();
-        _dio.interceptors.responseLock.unlock();
-
-        RequestOptions? options = err.response!.requestOptions;
-
-        if (options.data is FormData) {
-          FormData formData = FormData();
-          formData.fields.addAll(options.data.fields);
-          for (MapEntry mapFile in options.data.files) {
-            formData.files.add(MapEntry(mapFile.key, MultipartFile.fromFileSync(options.extra['image_path'], filename: mapFile.value.filename)));
+          //if request new token success, save new token to localstorage
+          if (newToken.error.isNotEmpty && newToken.errorCode! == 401) {
+            log("Refresh token has expired!");
+            _sharedPreferencesManager.clearAll();
+            locator<NavigationService>().navigateTo('/login_screen');
+            return null;
           }
-          options.data = formData;
-        }
 
-        final cloneRequest = await _dio.request(
-          options.path,
-          data: options.data,
-          options: Options(
-            method: options.method,
-            headers: options.headers
-              ..addAll(<String, dynamic>{
-                'Authorization': 'Bearer ${newToken.accessToken}',
-              }),
-          ),
-        );
-        handler.resolve(cloneRequest);
-        return;
-      } else {
-        super.onError(err, handler);
-        return;
+          if (newToken.error.isEmpty) {
+            //Replace old access token
+            log("Saving new Access token");
+            await _sharedPreferencesManager.putString(SharedPreferencesManager.keyAccessToken, newToken.accessToken);
+            // await _sharedPreferencesManager.putString(SharedPreferencesManager.keyRefreshToken, newToken.refreshToken);
+          }
+
+          //Unlock Interceptor
+          _dio.interceptors.requestLock.unlock();
+          _dio.interceptors.responseLock.unlock();
+
+          RequestOptions? options = err.response!.requestOptions;
+
+          if (options.data is FormData) {
+            FormData formData = FormData();
+            formData.fields.addAll(options.data.fields);
+            for (MapEntry mapFile in options.data.files) {
+              formData.files.add(MapEntry(mapFile.key, MultipartFile.fromFileSync(options.extra['image_path'], filename: mapFile.value.filename)));
+            }
+            options.data = formData;
+          }
+
+          final cloneRequest = await _dio.request(
+            options.path,
+            data: options.data,
+            options: Options(
+              method: options.method,
+              headers: options.headers
+                ..addAll(<String, dynamic>{
+                  'Authorization': 'Bearer ${newToken.accessToken}',
+                }),
+            ),
+          );
+          handler.resolve(cloneRequest);
+          return;
+        } else {
+          super.onError(err, handler);
+          return;
+        }
       }
     }
+
     super.onError(err, handler);
   }
 

@@ -16,11 +16,13 @@ PostModel _$PostModelFromJson(Map<String, dynamic> json) => PostModel(
       json['place'] as String,
     )
       ..userID = json['user_id'] as int
+      ..isReturned = json['is_returned'] as bool
       ..user = UserInfo.fromJson(json['user'] as Map<String, dynamic>);
 
 Map<String, dynamic> _$PostModelToJson(PostModel instance) => <String, dynamic>{
       'id': instance.id,
       'user_id': instance.userID,
+      'is_returned': instance.isReturned,
       'title': instance.title,
       'place': instance.place,
       'image_url': instance.imageUrl,

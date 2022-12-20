@@ -539,6 +539,13 @@ class _CameraUIState extends State<CameraUI> with WidgetsBindingObserver {
                                                   '${directory.path}/$currentUnix.$fileFormat',
                                                 );
 
+                                                setState(() {
+                                                  _currentFlashMode = FlashMode.off;
+                                                });
+                                                await controller!.setFlashMode(
+                                                  FlashMode.off,
+                                                );
+
                                                 WidgetsBinding.instance.addPostFrameCallback((_) {
                                                   Navigator.push(
                                                     context,

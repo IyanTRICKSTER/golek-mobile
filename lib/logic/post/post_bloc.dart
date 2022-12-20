@@ -21,19 +21,20 @@ class PostBloc extends Bloc<PostEvent, PostState> {
   bool isLoading = false;
   late BookmarkModel bookmark;
 
-  PostBloc() : super(PostUninitialized()) {
+  PostBloc() : super(PostUninitializedState()) {
     userID = _sharedPreferencesManager.getInt(SharedPreferencesManager.keyUserID)!;
     on<LoadPostEvent>(_fetchPost);
     on<UploadPostEvent>(_uploadPost);
     on<PostRequestValidationTokenEvent>(_requestPostValidationToken);
     on<PostValidateTokenEvent>(_validatePostOwner);
+    on<SearchPostEvent>(_searchPost);
   }
 
   Future<void> _fetchPost(LoadPostEvent event, Emitter emit) async {
     ListPostModel posts;
 
     //If State is loaded first time, then load data from page 1
-    if (state is PostUninitialized) {
+    if (state is PostUninitializedState) {
       if (!isLoading) {
         isLoading = true;
         posts = await _apiRepository.fetchPosts(1, 5);
@@ -46,15 +47,21 @@ class PostBloc extends Bloc<PostEvent, PostState> {
 
         //if server down, emit bad gateway error
         if (posts.error != null && posts.error!.response!.statusCode == 502 || bookmark.error != null) {
-          emit(PostLoadFailure("Bad Gateway", 1));
+          emit(const PostLoadFailure("Bad Gateway", 1));
           isLoading = false;
           return;
         }
         if (posts.error != null && posts.error!.response!.statusCode == 404) {
-          emit(PostLoadFailure("404 Not Found", 1));
+          emit(const PostLoadFailure("404 Not Found", 1));
           isLoading = false;
           return;
         }
+        if (posts.error != null) {
+          emit(PostLoadFailure(posts.error!.message.toString(), 1));
+          isLoading = false;
+          return;
+        }
+
         //otherwise, emit posts data
         emit(PostLoadedState(
           posts: posts,
@@ -96,6 +103,11 @@ class PostBloc extends Bloc<PostEvent, PostState> {
           posts = await _apiRepository.fetchPosts(postLoadedState.currentPage + 1, 5);
           if (posts.error != null && posts.error!.response!.statusCode == 502) {
             emit(PostLoadFailure("Bad Gateway", postLoadedState.currentPage + 1));
+            isLoading = false;
+            return;
+          }
+          if (posts.error != null && posts.error!.response!.statusCode == 502) {
+            emit(PostLoadFailure("404 Not Found", postLoadedState.currentPage + 1));
             isLoading = false;
             return;
           }
@@ -157,13 +169,125 @@ class PostBloc extends Bloc<PostEvent, PostState> {
       return;
     }
 
-    log(payload.toString());
+    // log(payload.toString());
 
     Response response =
         await _apiRepository.postValidate(PostValidationRequestModel(postID: payload["post_id"], ownerID: userID, hash: payload["hash"]));
-    if (response.statusCode != 200) {
+
+    log(response.statusCode!.toString());
+    if (response.statusCode! == 200) {
+      emit(PostValidateTokenSuccessState(response.statusMessage));
+      return;
+    } else {
       emit(PostValidateTokenFailureState(error: response.data["error"]));
+      return;
     }
-    emit(PostValidateTokenSuccessState());
+  }
+
+  Future<void> _searchPost(SearchPostEvent event, Emitter emit) async {
+    ListPostModel posts;
+
+    //If State is loaded first time, then load data from page 1
+    if (state is PostUninitializedState) {
+      if (!isLoading) {
+        isLoading = true;
+        posts = await _apiRepository.searchPost(event.keyword, 1, 5);
+
+        //if server down, emit bad gateway error
+        if (posts.error != null && posts.error!.response!.statusCode == 502) {
+          emit(const PostLoadFailure("Bad Gateway", 1));
+          isLoading = false;
+          return;
+        }
+        if (posts.error != null && posts.error!.response!.statusCode == 404) {
+          emit(const PostLoadFailure("404 Not Found", 1));
+          isLoading = false;
+          return;
+        }
+        if (posts.error != null) {
+          emit(PostLoadFailure(posts.error!.message.toString(), 1));
+          isLoading = false;
+          return;
+        }
+
+        //otherwise, emit posts data
+        emit(PostLoadedState(
+          posts: posts,
+          hasReachedMax: false,
+          currentPage: 1,
+          keyword: event.keyword,
+          bookmark: null,
+        ));
+        isLoading = false;
+      }
+    } else {
+      //if still error, emit bad gateway error
+      if (state is PostLoadFailure) {
+        PostLoadFailure postLoadFailure = state as PostLoadFailure;
+        if (!isLoading) {
+          isLoading = true;
+          posts = await _apiRepository.searchPost(event.keyword, postLoadFailure.lastPage, 5);
+          if (posts.error != null && posts.error!.response!.statusCode == 502) {
+            emit(PostLoadFailure("Bad Gateway", postLoadFailure.lastPage));
+            isLoading = false;
+            return;
+          }
+          if (posts.error != null && posts.error!.response!.statusCode == 404) {
+            emit(const PostLoadFailure("404 Not Found", 1));
+            isLoading = false;
+            return;
+          }
+          emit(PostLoadedState(
+            posts: posts,
+            hasReachedMax: false,
+            currentPage: 1,
+            keyword: event.keyword,
+            bookmark: null,
+          ));
+          isLoading = false;
+        }
+      } else {
+        PostLoadedState postLoadedState = state as PostLoadedState;
+        if (!isLoading) {
+          isLoading = true;
+
+          if (postLoadedState.keyword! != event.keyword) {
+            log("keyword changes");
+            posts = await _apiRepository.searchPost(event.keyword, 1, 5);
+            emit(PostLoadedState(
+                posts: posts, hasReachedMax: posts.data!.isEmpty ? true : false, currentPage: 1, bookmark: null, keyword: event.keyword));
+            isLoading = false;
+            return;
+          }
+
+          posts = await _apiRepository.searchPost(postLoadedState.keyword!, postLoadedState.currentPage + 1, 5);
+          if (posts.error != null && posts.error!.response!.statusCode == 502) {
+            emit(PostLoadFailure("Bad Gateway", postLoadedState.currentPage + 1));
+            isLoading = false;
+            return;
+          }
+          if (posts.error != null && posts.error!.response!.statusCode == 502) {
+            emit(PostLoadFailure("404 Not Found", postLoadedState.currentPage + 1));
+            isLoading = false;
+            return;
+          }
+
+          if (posts.data!.isEmpty) {
+            emit(postLoadedState.copyWith(hasReachedMax: true));
+            isLoading = false;
+          } else {
+            ListPostModel newList = ListPostModel(postLoadedState.posts!.data! + posts.data!);
+
+            emit(PostLoadedState(
+                posts: newList,
+                hasReachedMax: false,
+                currentPage: postLoadedState.currentPage + 1,
+                bookmark: null,
+                keyword: postLoadedState.keyword));
+            isLoading = false;
+          }
+        }
+      }
+    }
   }
 }

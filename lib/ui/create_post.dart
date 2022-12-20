@@ -81,7 +81,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                             onPressed: () {
                               Navigator.pop(context);
                             },
-                            child: const Icon(Icons.arrow_back)),
+                            child: const Icon(Icons.arrow_back, color: Colors.black)),
                         TextButton(
                           onPressed: () {
                             // log(snapshot.data!.path.toString());
@@ -111,7 +111,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                                   ),
                                   Padding(
                                     padding: EdgeInsets.only(left: 12.0),
-                                    child: Text("Loading..."),
+                                    child: Text("Mengunggah post..."),
                                   )
                                 ],
                               ),
@@ -127,7 +127,10 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                             // and use it to show a SnackBar.
                             ScaffoldMessenger.of(context).showSnackBar(snackBar);
                           },
-                          child: const Icon(Icons.arrow_forward),
+                          child: const Icon(
+                            Icons.check,
+                            color: Colors.black,
+                          ),
                         )
                       ],
                     ),

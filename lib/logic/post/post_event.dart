@@ -9,10 +9,16 @@ abstract class PostEvent extends Equatable {
 
 class LoadPostEvent extends PostEvent {}
 
-class UploadPostEvent extends PostEvent {
-  PostModel postModel;
+class SearchPostEvent extends PostEvent {
+  final String keyword;
 
-  UploadPostEvent(this.postModel);
+  const SearchPostEvent({required this.keyword});
+}
+
+class UploadPostEvent extends PostEvent {
+  final PostModel postModel;
+
+  const UploadPostEvent(this.postModel);
 }
 
 class PostRequestValidationTokenEvent extends PostEvent {

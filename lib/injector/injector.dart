@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
+import 'package:golek_mobile/api/streamchat_provider.dart';
 import 'package:golek_mobile/storage/sharedpreferences_manager.dart';
 
 GetIt locator = GetIt.instance;

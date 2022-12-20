@@ -11,6 +11,8 @@ class PostModel {
   late String id;
   @JsonKey(name: "user_id")
   late int userID;
+  @JsonKey(name: "is_returned")
+  late bool isReturned;
   @JsonKey(name: "title")
   late String title;
   @JsonKey(name: "place")

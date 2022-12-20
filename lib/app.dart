@@ -2,6 +2,7 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:golek_mobile/api/streamchat_provider.dart';
 import 'package:golek_mobile/injector/injector.dart';
 import 'package:golek_mobile/logic/auth/auth_bloc.dart';
 import 'package:golek_mobile/logic/bookmark/bookmark_bloc.dart';
@@ -9,14 +10,16 @@ import 'package:golek_mobile/logic/navigation/navigation_cubit.dart';
 import 'package:golek_mobile/storage/sharedpreferences_manager.dart';
 import 'package:golek_mobile/ui/camera/camera.dart';
 import 'package:golek_mobile/ui/confirmation.dart';
-import 'package:golek_mobile/ui/create_post.dart';
+// import 'package:golek_mobile/ui/create_post.dart';
 import 'package:golek_mobile/ui/home.dart';
 import 'package:golek_mobile/ui/login.dart';
 import 'package:golek_mobile/ui/notification.dart';
 import 'package:golek_mobile/ui/profile.dart';
 import 'package:golek_mobile/ui/search.dart';
+import 'package:stream_chat_flutter/stream_chat_flutter.dart';
 
 class App extends StatelessWidget {
+  //Locator for singletons instance
   final SharedPreferencesManager _sharedPreferencesManager = locator<SharedPreferencesManager>();
 
   App({super.key});
@@ -27,6 +30,10 @@ class App extends StatelessWidget {
         ? _sharedPreferencesManager.getBool(SharedPreferencesManager.keyIsLoggedIn)
         : false;
 
+    if (isAlreadyLoggedIn!) {
+      StreamChatProvider.instance.connectUser();
+    }
+
     return MultiBlocProvider(
       providers: [
         BlocProvider(
@@ -36,13 +43,19 @@ class App extends StatelessWidget {
           create: (context) => AuthBloc(),
         ),
         BlocProvider(
-          create: (context) => BookmarkBloc()..add(BookmarkRefreshEvent()),
+          create: (context) => BookmarkBloc(),
         ),
         // BlocProvider(create: (context) => PostBloc()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         title: 'Golek',
+        builder: (context, widget) {
+          return StreamChat(
+            client: StreamChatProvider.instance.client,
+            child: widget,
+          );
+        },
         home: isAlreadyLoggedIn! ? const MainScreen() : LoginScreen(),
         // home: const CreatePostScreen(),
         navigatorKey: locator<NavigationService>().navigatorKey,
@@ -56,7 +69,9 @@ class App extends StatelessWidget {
 }
 
 class MainScreen extends StatefulWidget {
-  const MainScreen({super.key});
+  const MainScreen({
+    super.key,
+  });
 
   @override
   State<StatefulWidget> createState() {
@@ -65,7 +80,7 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  final HomeScreen _homeScreen = const HomeScreen();
+  final HomeScreen _homeScreen = HomeScreen();
   final SearchScreen _searchScreen = const SearchScreen();
   final ProfileScreen _profileScreen = const ProfileScreen();
   final PageController pageController = PageController();
@@ -86,6 +101,19 @@ class _MainScreenState extends State<MainScreen> {
     setState(() {
       tabIndex = index;
     });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // widget.streamChatProvider.connectUser();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    // widget.streamChatProvider.client.disconnectUser();
+    // StreamChatProvider.dispose();
   }
 
   @override
@@ -232,44 +260,11 @@ class _MainScreenState extends State<MainScreen> {
                 } else {
                   pageController.jumpToPage(index);
                 }
-
-                // if (index == 0) {
-                //   BlocProvider.of<NavigationCubit>(context).getNavBarItem(NavbarItem.home);
-                // } else if (index == 1) {
-                //   BlocProvider.of<NavigationCubit>(context).getNavBarItem(NavbarItem.camera);
-                // } else if (index == 2) {
-                //   BlocProvider.of<NavigationCubit>(context).getNavBarItem(NavbarItem.search);
-                // } else if (index == 3) {
-                //   BlocProvider.of<NavigationCubit>(context).getNavBarItem(NavbarItem.profile);
-                // }
               },
             ),
           );
         },
       ),
-      // body: BlocBuilder<NavigationCubit, NavigationState>(
-      //   builder: (context, state) {
-      //     if (state.navbarItem == NavbarItem.home) {
-      //       return _homeScreen;
-      //     } else if (state.navbarItem == NavbarItem.camera) {
-      //       WidgetsBinding.instance.addPostFrameCallback((_) {
-      //         Navigator.push(
-      //           context,
-      //           MaterialPageRoute(
-      //             builder: (context) => const CameraPage(),
-      //           ),
-      //         );
-      //       });
-      //     } else if (state.navbarItem == NavbarItem.search) {
-      //       return _searchScreen;
-      //     } else if (state.navbarItem == NavbarItem.profile) {
-      //       return _profileScreen;
-      //     }
-
-      //     BlocProvider.of<NavigationCubit>(context).getNavBarItem(NavbarItem.home);
-      //     return Container();
-      //   },
-      // ),
       body: PageView(
         controller: pageController,
         onPageChanged: onPageChanged,
@@ -292,7 +287,7 @@ class _MainScreenState extends State<MainScreen> {
           });
         },
         backgroundColor: const Color.fromRGBO(161, 20, 68, 1.0),
-        child: const Icon(Icons.check_outlined),
+        child: const Icon(Icons.handshake),
       ),
     );
   }

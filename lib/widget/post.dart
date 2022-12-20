@@ -3,18 +3,34 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:expandable_text/expandable_text.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:golek_mobile/api/streamchat_provider.dart';
 import 'package:golek_mobile/logic/bookmark/bookmark_bloc.dart';
 import 'package:golek_mobile/models/bookmark/bookmark_model.dart';
 import 'package:golek_mobile/models/post/post_model.dart';
+import 'package:golek_mobile/ui/chat_screen.dart';
 import 'package:golek_mobile/ui/request_confirmation.dart';
+import 'package:stream_chat_flutter/stream_chat_flutter.dart';
 
 class Post extends StatefulWidget {
   final PostModel postModel;
   final BookmarkModel bookmarkModel;
   final int loggedInUserID;
+  final String loggedInUsername;
+  final int listViewIndex;
   late bool isOwner;
+  late Function? onDeleteClicked;
+  late Function? onUpdateClicked;
 
-  Post({super.key, required this.postModel, required this.loggedInUserID, required this.bookmarkModel}) {
+  Post({
+    super.key,
+    required this.postModel,
+    required this.loggedInUserID,
+    required this.bookmarkModel,
+    required this.loggedInUsername,
+    required this.listViewIndex,
+    this.onDeleteClicked,
+    this.onUpdateClicked,
+  }) {
     postModel.userID == loggedInUserID ? isOwner = true : isOwner = false;
   }
 
@@ -114,7 +130,18 @@ class _PostState extends State<Post> {
                           ),
                         ];
                       }),
-                      onSelected: ((value) {}),
+                      onSelected: ((value) {
+                        // log("index post: ${widget.listViewIndex}");
+                        switch (value) {
+                          case 0:
+                            widget.onUpdateClicked!();
+                            break;
+                          case 1:
+                            widget.onDeleteClicked!();
+                            break;
+                          default:
+                        }
+                      }),
                     )
                   : Container(),
             ],
@@ -189,34 +216,44 @@ class _PostState extends State<Post> {
                       margin: EdgeInsets.all(0),
                     )
                   : IconButton(
-                      onPressed: () => {print("Chat button clicked!")},
+                      onPressed: () => {
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ChatScreen(
+                                client: StreamChat.of(context).client,
+                                channel: StreamChatProvider.instance.setupChannel([widget.postModel.userID.toString()]),
+                              ),
+                            ),
+                          );
+                        }),
+                      },
                       icon: const Icon(
                         Icons.chat_bubble_outline_sharp,
                         size: 27,
                       ),
                     ),
               widget.isOwner
-                  ? IconButton(
-                      onPressed: () => {
-                        WidgetsBinding.instance.addPostFrameCallback((_) {
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => RequestConfirmationScreen(
-                                        postID: widget.postModel.id,
-                                      )));
-                        }),
-                      },
-                      icon: const Icon(
-                        Icons.handshake_outlined,
-                        size: 27,
-                      ),
-                    )
-                  : Container(
-                      height: 0,
-                      width: 0,
-                      margin: EdgeInsets.all(0),
-                    ),
+                  ? !widget.postModel.isReturned
+                      ? IconButton(
+                          onPressed: () => {
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => RequestConfirmationScreen(
+                                            postID: widget.postModel.id,
+                                          )));
+                            }),
+                          },
+                          icon: const Icon(
+                            Icons.handshake_outlined,
+                            size: 27,
+                          ),
+                        )
+                      : Container()
+                  : Container(),
             ],
           ),
         ),

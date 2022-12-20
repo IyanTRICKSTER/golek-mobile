@@ -7,7 +7,7 @@ abstract class PostState extends Equatable {
   List<Object> get props => [];
 }
 
-class PostUninitialized extends PostState {}
+class PostUninitializedState extends PostState {}
 
 class PostLoadingState extends PostState {}
 
@@ -22,13 +22,18 @@ class PostLoadedState extends PostState {
   ListPostModel? posts;
   bool hasReachedMax;
   int currentPage;
-  BookmarkModel bookmark;
+  BookmarkModel? bookmark;
+  String? keyword;
 
-  PostLoadedState({required this.posts, required this.hasReachedMax, required this.currentPage, required this.bookmark});
+  PostLoadedState({required this.posts, required this.hasReachedMax, required this.currentPage, required this.bookmark, this.keyword});
 
-  PostLoadedState copyWith({ListPostModel? posts, bool? hasReachedMax, int? page}) {
+  PostLoadedState copyWith({ListPostModel? posts, bool? hasReachedMax, int? page, String? keyword}) {
     return PostLoadedState(
-        posts: posts ?? this.posts, hasReachedMax: hasReachedMax ?? this.hasReachedMax, currentPage: page ?? currentPage, bookmark: bookmark);
+        posts: posts ?? this.posts,
+        hasReachedMax: hasReachedMax ?? this.hasReachedMax,
+        currentPage: page ?? currentPage,
+        bookmark: bookmark,
+        keyword: keyword ?? this.keyword);
   }
 
   @override
@@ -66,7 +71,14 @@ class PostRequestValidationTokenFailureState extends PostState {
 class PostRequestValidationTokenLoadingState extends PostState {}
 
 //
-class PostValidateTokenSuccessState extends PostState {}
+class PostValidateTokenSuccessState extends PostState {
+  final String? message;
+
+  const PostValidateTokenSuccessState(this.message);
+
+  @override
+  List<Object> get props => [message!];
+}
 
 class PostValidateTokenFailureState extends PostState {
   final String error;

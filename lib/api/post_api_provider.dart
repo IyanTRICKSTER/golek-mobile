@@ -22,6 +22,16 @@ class APIPostProvider {
     }
   }
 
+  Future<ListPostModel> searchPost(String keyword, int page, int limit) async {
+    try {
+      Response response = await _dio.get("posts/s/$keyword?page=$page&limit=$limit");
+      return ListPostModel.fromJson(response.data);
+    } on DioError catch (error, stacktrace) {
+      _printError(error, stacktrace);
+      return ListPostModel.withError(error);
+    }
+  }
+
   Future<ListPostModel> fetchPostsByUserID(int page, int limit, int userID, String isReturned) async {
     try {
       Response response = await _dio.get("posts/list?page=$page&limit=$limit&user-id=$userID&returned=$isReturned");
@@ -78,6 +88,16 @@ class APIPostProvider {
         "posts/validate/",
         data: requestModel.toJson(),
       );
+      return response;
+    } on DioError catch (error, stacktrace) {
+      _printError(error, stacktrace);
+      return error.response!;
+    }
+  }
+
+  Future<Response> deletePost(String postID) async {
+    try {
+      Response response = await _dio.delete("posts/$postID");
       return response;
     } on DioError catch (error, stacktrace) {
       _printError(error, stacktrace);

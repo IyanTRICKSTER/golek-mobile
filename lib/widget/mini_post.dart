@@ -13,12 +13,13 @@ class MiniPost extends StatefulWidget {
 class _MiniPostState extends State<MiniPost> {
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(5),
-      height: 120,
-      width: 120,
-      child: Image.network(
-        widget.postModel.imageUrl,
+    return Padding(
+      padding: const EdgeInsets.all(2.0),
+      child: FittedBox(
+        fit: BoxFit.fill,
+        child: Image.network(
+          widget.postModel.imageUrl,
+        ),
       ),
     );
   }

@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:golek_mobile/logic/post/post_bloc.dart';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
 
@@ -180,20 +181,48 @@ class _ConfirmationPostScreenState extends State<ConfirmationPostScreen> {
           },
           child: BlocBuilder<PostBloc, PostState>(
             builder: (context, state) {
+              if (state is PostValidateTokenSuccessState) {
+                return AlertDialog(
+                  title: const Text("Konfirmasi berhasil"),
+                  content: const SizedBox(
+                    height: 30,
+                    width: 30,
+                    child: Icon(Icons.check_sharp),
+                  ),
+                  actions: <Widget>[
+                    TextButton(
+                      onPressed: () => Navigator.pushNamedAndRemoveUntil(context, '/main_screen', (route) => false),
+                      child: const Text('Kembali'),
+                    ),
+                  ],
+                );
+              }
+              if (state is PostValidateTokenLoadingState) {
+                return const AlertDialog(
+                  title: Text("Loading"),
+                  content: SizedBox(
+                    height: 30,
+                    width: 30,
+                    child: CircularProgressIndicator(
+                      color: Color.fromARGB(255, 37, 35, 35),
+                    ),
+                  ),
+                );
+              }
               return AlertDialog(
-                title: const Text('Konfirmasi pengembalian?'),
+                title: const Text('Konfirmasi pengembalian barang?'),
                 // content: state is PostValidateTokenSuccessState ? const Text('Validasi berhasil') : const Text(""),
                 actions: <Widget>[
                   TextButton(
-                    onPressed: () => Navigator.pop(context, 'Cancel'),
-                    child: const Text('Cancel'),
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Batal'),
                   ),
                   TextButton(
-                    onPressed: () => {
-                      _postBloc.add(PostValidateTokenEvent(jsonStringPayload: barcodeResult.code!.toString())),
-                      Navigator.pop(context, "OK"),
+                    onPressed: () {
+                      _postBloc.add(PostValidateTokenEvent(jsonStringPayload: barcodeResult.code!.toString()));
+                      // Navigator.pop(context);
                     },
-                    child: const Text('OK'),
+                    child: const Text('Lanjut'),
                   ),
                 ],
               );

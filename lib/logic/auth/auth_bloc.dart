@@ -5,6 +5,7 @@ import 'dart:developer';
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:golek_mobile/api/api_repository.dart';
+import 'package:golek_mobile/api/streamchat_provider.dart';
 import 'package:golek_mobile/injector/injector.dart';
 import 'package:golek_mobile/models/login/login_body.dart';
 import 'package:golek_mobile/models/token/token.dart';
@@ -60,11 +61,16 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     await sharedPreferencesManager.putInt(SharedPreferencesManager.keyUserID, user.id);
     await sharedPreferencesManager.putString(SharedPreferencesManager.keyUsername, user.username);
 
+    //Instantiate StreamchatAPI
+    StreamChatProvider.instance.connectUser();
+
     emit(LoginSuccessState());
   }
 
   Future<void> _logout(LogoutEvent event, Emitter<AuthState> emit) async {
     await sharedPreferencesManager.clearAll();
+    StreamChatProvider.instance.client.disconnectUser();
+    StreamChatProvider.dispose();
     emit(LogoutSuccessState());
   }
 }

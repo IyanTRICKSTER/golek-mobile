@@ -51,6 +51,8 @@ dependencies:
   json_annotation: ^4.7.0
   equatable: ^2.0.5
   email_validator: ^2.0.1
+  stream_chat_flutter: ^5.0.0
+  slugify_string: ^2.0.0
 
 dev_dependencies:
   flutter_test:
