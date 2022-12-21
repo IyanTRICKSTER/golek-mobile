@@ -28,6 +28,7 @@ class PostBloc extends Bloc<PostEvent, PostState> {
     on<PostRequestValidationTokenEvent>(_requestPostValidationToken);
     on<PostValidateTokenEvent>(_validatePostOwner);
     on<SearchPostEvent>(_searchPost);
+    on<DeletePostEvent>(_deletePost);
   }
 
   Future<void> _fetchPost(LoadPostEvent event, Emitter emit) async {
@@ -46,12 +47,12 @@ class PostBloc extends Bloc<PostEvent, PostState> {
         }
 
         //if server down, emit bad gateway error
-        if (posts.error != null && posts.error!.response!.statusCode == 502 || bookmark.error != null) {
+        if (posts.error != null && posts.error!.response != null && posts.error!.response!.statusCode == 502 || bookmark.error != null) {
           emit(const PostLoadFailure("Bad Gateway", 1));
           isLoading = false;
           return;
         }
-        if (posts.error != null && posts.error!.response!.statusCode == 404) {
+        if (posts.error != null && posts.error!.response != null && posts.error!.response!.statusCode == 404) {
           emit(const PostLoadFailure("404 Not Found", 1));
           isLoading = false;
           return;
@@ -78,16 +79,22 @@ class PostBloc extends Bloc<PostEvent, PostState> {
         if (!isLoading) {
           isLoading = true;
           posts = await _apiRepository.fetchPosts(postLoadFailure.lastPage, 5);
-          if (posts.error != null && posts.error!.response!.statusCode == 502) {
+          if (posts.error != null && posts.error!.response != null && posts.error!.response!.statusCode == 502) {
             emit(PostLoadFailure("Bad Gateway", postLoadFailure.lastPage));
             isLoading = false;
             return;
           }
-          if (posts.error != null && posts.error!.response!.statusCode == 404) {
-            emit(PostLoadFailure("404 Not Found", 1));
+          if (posts.error != null && posts.error!.response != null && posts.error!.response!.statusCode == 404) {
+            emit(PostLoadFailure("404 Not Found", postLoadFailure.lastPage));
             isLoading = false;
             return;
           }
+          if (posts.error != null) {
+            emit(PostLoadFailure(posts.error!.message.toString(), postLoadFailure.lastPage));
+            isLoading = false;
+            return;
+          }
+
           emit(PostLoadedState(
             posts: posts,
             hasReachedMax: false,
@@ -101,13 +108,18 @@ class PostBloc extends Bloc<PostEvent, PostState> {
         if (!isLoading) {
           isLoading = true;
           posts = await _apiRepository.fetchPosts(postLoadedState.currentPage + 1, 5);
-          if (posts.error != null && posts.error!.response!.statusCode == 502) {
+          if (posts.error != null && posts.error!.response != null && posts.error!.response!.statusCode == 502) {
             emit(PostLoadFailure("Bad Gateway", postLoadedState.currentPage + 1));
             isLoading = false;
             return;
           }
-          if (posts.error != null && posts.error!.response!.statusCode == 502) {
+          if (posts.error != null && posts.error!.response != null && posts.error!.response!.statusCode == 404) {
             emit(PostLoadFailure("404 Not Found", postLoadedState.currentPage + 1));
+            isLoading = false;
+            return;
+          }
+          if (posts.error != null) {
+            emit(PostLoadFailure(posts.error!.message.toString(), postLoadedState.currentPage + 1));
             isLoading = false;
             return;
           }
@@ -289,5 +301,18 @@ class PostBloc extends Bloc<PostEvent, PostState> {
         }
       }
     }
+  }
+
+  Future<void> _deletePost(DeletePostEvent event, Emitter emit) async {
+    Response response = await _apiRepository.deletePost(event.postID);
+
+    // if (response.statusCode! != 200) {
+    //   emit(PostDeletedState(message: response.statusMessage, errorCode: response.statusCode));
+    //   return;
+    // }
+
+    // log(response.data["message"]);
+    // emit(PostDeletedState(message: response.statusMessage));
+    return;
   }
 }

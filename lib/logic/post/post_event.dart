@@ -21,6 +21,12 @@ class UploadPostEvent extends PostEvent {
   const UploadPostEvent(this.postModel);
 }
 
+class DeletePostEvent extends PostEvent {
+  final String postID;
+
+  const DeletePostEvent({required this.postID});
+}
+
 class PostRequestValidationTokenEvent extends PostEvent {
   final String postID;
 

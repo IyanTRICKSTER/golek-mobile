@@ -49,6 +49,13 @@ class PostUploadedState extends PostState {
   List<Object> get props => [post!];
 }
 
+class PostDeletedState extends PostState {
+  final String? message;
+  final int? errorCode;
+
+  const PostDeletedState({required this.message, this.errorCode});
+}
+
 //
 class PostRequestValidationTokenSuccessState extends PostState {
   final String qrCodeUrl;

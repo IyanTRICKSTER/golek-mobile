@@ -9,6 +9,7 @@ import 'package:golek_mobile/logic/bookmark/bookmark_bloc.dart';
 import 'package:golek_mobile/logic/navigation/navigation_cubit.dart';
 import 'package:golek_mobile/storage/sharedpreferences_manager.dart';
 import 'package:golek_mobile/ui/camera/camera.dart';
+import 'package:golek_mobile/ui/channel_chat_screen.dart';
 import 'package:golek_mobile/ui/confirmation.dart';
 // import 'package:golek_mobile/ui/create_post.dart';
 import 'package:golek_mobile/ui/home.dart';
@@ -137,13 +138,25 @@ class _MainScreenState extends State<MainScreen> {
                     IconButton(
                       onPressed: () => {
                         WidgetsBinding.instance.addPostFrameCallback((_) {
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => const ChannelListPage()));
+                        }),
+                      },
+                      icon: const Icon(
+                        Icons.chat_outlined,
+                        color: Color.fromARGB(221, 29, 28, 28),
+                        size: 26,
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => {
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
                           Navigator.push(context, MaterialPageRoute(builder: (context) => const NotificationPage()));
                         }),
                       },
                       icon: const Icon(
                         Icons.notifications_outlined,
                         color: Color.fromARGB(221, 29, 28, 28),
-                        size: 32,
+                        size: 28,
                       ),
                     ),
                     PopupMenuButton(

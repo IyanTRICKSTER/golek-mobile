@@ -40,9 +40,6 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
       create: (context) => _postBloc..add(LoadPostEvent()),
       child: BlocListener<PostBloc, PostState>(
         listener: (context, state) {
-          // if (state is PostLoadedState) {
-          //   log("wkwk!!");
-          // }
           // log(state.toString());
         },
         child: BlocBuilder<PostBloc, PostState>(
@@ -98,9 +95,132 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
                         loggedInUserID: _sharedPreferencesManager.getInt(SharedPreferencesManager.keyUserID)!,
                         loggedInUsername: _sharedPreferencesManager.getString(SharedPreferencesManager.keyUsername)!,
                         onUpdateClicked: () {
-                          log("update post");
+                          PostBloc localPostBloc = PostBloc();
+                          showModalBottomSheet<void>(
+                            shape: const RoundedRectangleBorder(
+                              borderRadius: BorderRadius.vertical(
+                                top: Radius.circular(
+                                  6.0,
+                                ),
+                              ),
+                            ),
+                            isScrollControlled: true,
+                            context: context,
+                            builder: (BuildContext context) {
+                              return StatefulBuilder(
+                                builder: ((BuildContext context, StateSetter modalSetState) {
+                                  //
+                                  final titleTextController = TextEditingController(text: post.title);
+                                  final placeTextController = TextEditingController(text: post.place);
+                                  final List<TextEditingController> characsInputControllers = [];
+                                  final List<TextFormField> characsInput = [];
+
+                                  for (var i = 0; i < post.characteristics.length; i++) {
+                                    characsInputControllers.add(TextEditingController(text: post.characteristics[i].title));
+                                    characsInput.add(
+                                      TextFormField(
+                                        controller: characsInputControllers[i],
+                                        decoration: InputDecoration(
+                                          border: const UnderlineInputBorder(),
+                                          labelText: "${i + 1}",
+                                        ),
+                                      ),
+                                    );
+                                  }
+
+                                  return Padding(
+                                    padding: MediaQuery.of(context).viewInsets,
+                                    child: Padding(
+                                      padding: const EdgeInsets.fromLTRB(6, 4, 6, 10),
+                                      child: Column(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: <Widget>[
+                                          TextFormField(
+                                            controller: titleTextController,
+                                            decoration: const InputDecoration(
+                                              border: UnderlineInputBorder(),
+                                              labelText: 'Judul Post',
+                                            ),
+                                          ),
+                                          TextFormField(
+                                            controller: placeTextController,
+                                            decoration: const InputDecoration(
+                                              border: UnderlineInputBorder(),
+                                              labelText: 'Tempat ditemukan',
+                                            ),
+                                          ),
+                                          const Padding(
+                                            padding: EdgeInsets.only(top: 16.0),
+                                            child: Text(
+                                              "Ciri - ciri",
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                          Column(
+                                            children: characsInput,
+                                          ),
+                                          // ElevatedButton(
+                                          //   onPressed: () {
+                                          //     setState(() {
+                                          //       characsInputControllers.add(TextEditingController(text: ""));
+                                          //       characsInput.add(
+                                          //         TextFormField(
+                                          //           controller: characsInputControllers[characsInputControllers.length - 1],
+                                          //           decoration: InputDecoration(
+                                          //             border: const UnderlineInputBorder(),
+                                          //             labelText: "${characsInputControllers.length}",
+                                          //           ),
+                                          //         ),
+                                          //       );
+                                          //       // log(characsInput.length.toString());
+                                          //     });
+                                          //   },
+                                          //   child: const Icon(Icons.add),
+                                          // ),
+                                          // ElevatedButton(
+                                          //   onPressed: () {
+                                          //     setState(() {
+                                          //       characsInputControllers.removeLast();
+                                          //       characsInput.removeLast();
+                                          //       // log(characsInput.length.toString());
+                                          //     });
+                                          //   },
+                                          //   child: const Icon(Icons.remove),
+                                          // ),
+                                          ElevatedButton(
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: const Color.fromARGB(255, 176, 39, 73),
+                                              elevation: 3,
+                                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32.0)),
+                                              minimumSize: Size(MediaQuery.of(context).size.width, 42),
+                                            ),
+                                            child: const Text('Update'),
+                                            onPressed: () {
+                                              setState(() {
+                                                post.title = titleTextController.text;
+                                                post.place = placeTextController.text;
+                                                for (var i = 0; i < post.characteristics.length; i++) {
+                                                  post.characteristics[i].title = characsInputControllers[i].text;
+                                                }
+                                              });
+                                              localPostBloc.close();
+                                              Navigator.pop(context);
+                                            },
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                }),
+                              );
+                            },
+                          );
                         },
                         onDeleteClicked: () {
+                          _postBloc.add(DeletePostEvent(postID: post.id));
                           setState(() {
                             postLoadedState.posts!.data!.removeAt(index);
                           });

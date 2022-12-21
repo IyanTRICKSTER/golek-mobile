@@ -49,6 +49,29 @@ class _LoginScreenState extends State<LoginScreen> {
       listener: (context, state) {
         if (state is LoginSuccessState) {
           Navigator.pushNamedAndRemoveUntil(context, '/main_screen', (r) => false);
+          ScaffoldMessenger.of(context).removeCurrentSnackBar();
+        } else if (state is LoginLodingState) {
+          final snackBar = SnackBar(
+            // backgroundColor: Colors.white,
+            duration: const Duration(minutes: 1),
+            content: Row(
+              children: const [
+                SizedBox(
+                  height: 30,
+                  width: 30,
+                  child: CircularProgressIndicator(),
+                ),
+                Padding(
+                  padding: EdgeInsets.only(left: 12.0),
+                  child: Text("Login..."),
+                )
+              ],
+            ),
+          );
+
+          // Find the ScaffoldMessenger in the widget tree
+          // and use it to show a SnackBar.
+          ScaffoldMessenger.of(context).showSnackBar(snackBar);
         } else if (state is LoginFailState) {
           setState(() {
             _errorMessage = state.error.toString();
@@ -68,11 +91,23 @@ class _LoginScreenState extends State<LoginScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Container(
+                        width: 100,
+                        height: 30,
+                        child: Image.asset("assets/images/logo.png"),
+                      ),
+                      Container(
                         child: TextFormField(
                           controller: usernameController,
+                          cursorColor: const Color.fromARGB(255, 163, 4, 33),
                           decoration: const InputDecoration(
-                            border: UnderlineInputBorder(),
-                            labelText: 'Email',
+                            border: OutlineInputBorder(),
+                            enabledBorder: UnderlineInputBorder(
+                              borderSide: BorderSide(color: Colors.black),
+                            ),
+                            focusedBorder: UnderlineInputBorder(
+                              borderSide: BorderSide(color: Colors.black),
+                            ),
+                            hintText: 'Email',
                           ),
                           onChanged: (val) {
                             validateEmail(val);
@@ -80,12 +115,19 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                       Container(
-                        child: TextField(
+                        child: TextFormField(
                           controller: passwordController,
                           obscureText: true,
+                          cursorColor: const Color.fromARGB(255, 163, 4, 33),
                           decoration: const InputDecoration(
                             border: UnderlineInputBorder(),
-                            labelText: 'Password',
+                            enabledBorder: UnderlineInputBorder(
+                              borderSide: BorderSide(color: Colors.black),
+                            ),
+                            focusedBorder: UnderlineInputBorder(
+                              borderSide: BorderSide(color: Colors.black),
+                            ),
+                            hintText: 'Password',
                           ),
                         ),
                       ),
@@ -93,15 +135,20 @@ class _LoginScreenState extends State<LoginScreen> {
                         padding: const EdgeInsets.all(8.0),
                         child: Text(
                           _errorMessage,
-                          style: TextStyle(color: Colors.red),
+                          style: TextStyle(color: Color.fromARGB(255, 168, 8, 40)),
                         ),
                       ),
                       Container(
-                        margin: EdgeInsets.only(top: 10),
+                        margin: EdgeInsets.only(top: 0),
                         child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color.fromARGB(255, 176, 39, 73),
+                            elevation: 3,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+                            minimumSize: Size(MediaQuery.of(context).size.width, 42),
+                          ),
                           onPressed: () => {
-                            // context.read<AuthBloc>().add(LoginEvent(loginBody: LoginBody("septian@gmail.com", "secret12345"))),
-                            log(usernameController.text + "" + passwordController.text),
+                            // log("${usernameController.text}${passwordController.text}"),
                             context.read<AuthBloc>().add(LoginEvent(loginBody: LoginBody(usernameController.text, passwordController.text))),
                           },
                           child: Container(

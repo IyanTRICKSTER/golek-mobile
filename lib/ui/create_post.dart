@@ -50,7 +50,50 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     super.initState();
   }
 
-  void submitForm() {}
+  String? get _titleErrorText {
+    // at any time, we can get the text from _controller.value.text
+    final text = titleController.value.text;
+    // Note: you can do your own custom validation here
+    // Move this logic this outside the widget for more testable code
+    if (text.isEmpty) {
+      return 'Can\'t be empty';
+    }
+    if (text.length < 3) {
+      return 'Too short';
+    }
+    // return null if the text is valid
+    return null;
+  }
+
+  String? get _placeErrorText {
+    // at any time, we can get the text from _controller.value.text
+    final text = placeController.value.text;
+    // Note: you can do your own custom validation here
+    // Move this logic this outside the widget for more testable code
+    if (text.isEmpty) {
+      return 'Can\'t be empty';
+    }
+    if (text.length < 3) {
+      return 'Too short';
+    }
+    // return null if the text is valid
+    return null;
+  }
+
+  String? get _charac1ErrorText {
+    // at any time, we can get the text from _controller.value.text
+    final text = input1.value.text;
+    // Note: you can do your own custom validation here
+    // Move this logic this outside the widget for more testable code
+    if (text.isEmpty) {
+      return 'Can\'t be empty';
+    }
+    if (text.length < 3) {
+      return 'Too short';
+    }
+    // return null if the text is valid
+    return null;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -59,7 +102,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       child: BlocListener<PostBloc, PostState>(
         listener: (context, state) {
           if (state is PostUploadedState) {
-            ScaffoldMessenger.of(context).hideCurrentSnackBar();
+            ScaffoldMessenger.of(context).removeCurrentSnackBar();
             Navigator.pushNamedAndRemoveUntil(context, "/main_screen", (route) => false);
           }
         },
@@ -84,48 +127,49 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                             child: const Icon(Icons.arrow_back, color: Colors.black)),
                         TextButton(
                           onPressed: () {
-                            // log(snapshot.data!.path.toString());
-
-                            PostModel postData = PostModel(
-                              "",
-                              titleController.text,
-                              widget.imageFile!.path,
-                              <PostCharacteristic>[
-                                PostCharacteristic(input1.text),
-                                PostCharacteristic(input2.text),
-                                PostCharacteristic(input3.text),
-                              ],
-                              placeController.text,
-                            );
-
-                            BlocProvider.of<PostBloc>(context).add(UploadPostEvent(postData));
-
-                            final snackBar = SnackBar(
-                              duration: const Duration(minutes: 1),
-                              content: Row(
-                                children: const [
-                                  SizedBox(
-                                    height: 30,
-                                    width: 30,
-                                    child: CircularProgressIndicator(),
-                                  ),
-                                  Padding(
-                                    padding: EdgeInsets.only(left: 12.0),
-                                    child: Text("Mengunggah post..."),
-                                  )
+                            if (_titleErrorText == null && _placeErrorText == null && _charac1ErrorText == null) {
+                              PostModel postData = PostModel(
+                                "",
+                                titleController.text,
+                                widget.imageFile!.path,
+                                <PostCharacteristic>[
+                                  PostCharacteristic(input1.text),
+                                  PostCharacteristic(input2.text),
+                                  PostCharacteristic(input3.text),
                                 ],
-                              ),
-                              action: SnackBarAction(
-                                label: 'cancel',
-                                onPressed: () {
-                                  // Some code to undo the change.
-                                },
-                              ),
-                            );
+                                placeController.text,
+                              );
 
-                            // Find the ScaffoldMessenger in the widget tree
-                            // and use it to show a SnackBar.
-                            ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                              BlocProvider.of<PostBloc>(context).add(UploadPostEvent(postData));
+
+                              final snackBar = SnackBar(
+                                duration: const Duration(minutes: 1),
+                                content: Row(
+                                  children: const [
+                                    SizedBox(
+                                      height: 30,
+                                      width: 30,
+                                      child: CircularProgressIndicator(),
+                                    ),
+                                    Padding(
+                                      padding: EdgeInsets.only(left: 12.0),
+                                      child: Text("Mengunggah post..."),
+                                    )
+                                  ],
+                                ),
+                                action: SnackBarAction(
+                                  textColor: Colors.red,
+                                  label: 'cancel',
+                                  onPressed: () {
+                                    // Some code to undo the change.
+                                  },
+                                ),
+                              );
+
+                              // Find the ScaffoldMessenger in the widget tree
+                              // and use it to show a SnackBar.
+                              ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                            }
                           },
                           child: const Icon(
                             Icons.check,
@@ -149,6 +193,8 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                                   return Container(
                                     height: MediaQuery.of(context).size.height / 2.3,
                                     decoration: BoxDecoration(
+                                      color: Colors.black12,
+                                      borderRadius: BorderRadius.circular(12),
                                       image: DecorationImage(
                                         image: Image.file(widget.imageFile!).image,
                                       ),
@@ -162,28 +208,32 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                             ),
                             TextFormField(
                               controller: titleController,
-                              decoration: const InputDecoration(
-                                border: UnderlineInputBorder(),
+                              decoration: InputDecoration(
+                                border: const UnderlineInputBorder(),
                                 labelText: 'Judul Post',
                               ),
                             ),
                             TextFormField(
                               controller: placeController,
-                              decoration: const InputDecoration(
-                                border: UnderlineInputBorder(),
+                              decoration: InputDecoration(
+                                border: const UnderlineInputBorder(),
                                 labelText: 'Tempat ditemukan',
                               ),
                             ),
+                            Divider(),
                             const Padding(
                               padding: EdgeInsets.only(top: 8.0),
-                              child: Text("Ciri - ciri"),
+                              child: Text(
+                                "Tuliskan ciri-ciri barang agar mudah dikenali pemilik!",
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
                             ),
                             Column(
                               children: [
                                 TextFormField(
                                   controller: input1,
-                                  decoration: const InputDecoration(
-                                    border: UnderlineInputBorder(),
+                                  decoration: InputDecoration(
+                                    border: const UnderlineInputBorder(),
                                     labelText: '1',
                                   ),
                                 ),

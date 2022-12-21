@@ -39,6 +39,7 @@ class APIRepository {
   Future<PostValidationResponseModel> requestPostValidationToken(String postID) async => await _apiPostProvider.requestPostValidation(postID);
   Future<Response> postValidate(PostValidationRequestModel requestModel) async => await _apiPostProvider.postValidate(requestModel);
   Future<ListPostModel> searchPost(String postID, int page, int limit) async => await _apiPostProvider.searchPost(postID, page, limit);
+  Future<Response> deletePost(String postID) async => await _apiPostProvider.deletePost(postID);
 
   //Bookmark
   Future<BookmarkModel> fetchBookmarkByUserID(int userID) async => await _apiBookmarkProvider.fetchBookmarkByUserID(userID);
